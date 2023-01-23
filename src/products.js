@@ -1,62 +1,76 @@
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+  const currencyFormatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-});
+  });
+  
+  const BASE_URL = 'https://us-central1-insider-integrations.cloudfunctions.net/cart-api-fullstack-test'
+  const cartLocalData = JSON.parse(localStorage.getItem('@cartLocalData'));
 
-const cartResponse = {
-    token: "c8219186-d024-450a-9c88-3bcb064a1069",
-    products: [
-        {
-            valor: 140,
-            nome: "Tech t-shirt Gola V",
-            codigo: "tech-t-shirt-gola-v",
-            quantity: 1,
-            imagem: "https://cdn.shopify.com/s/files/1/0526/4123/5093/products/4_5_400x.jpg?v=1659463010"
+  function callEndpoint(url, retries = 5, cart) {
+    return new Promise((resolve, reject) => {
+      fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(cart),
+        headers: {
+            'Content-Type': 'application/json'
         }
-    ],
-    valor_total: 140,
-    itens_total: 1
+    })
+        .then(response => {
+          if (response.status === 500 && retries > 0) {
+            callEndpoint(url, retries - 1, cart)
+              .then(resolve)
+              .catch(reject);
+          } else if (!response.ok) {
+            reject(response);
+          } else {
+            resolve(response);
+          }
+        })
+        .catch(error => {
+          if (retries > 0) {
+            callEndpoint(url, retries - 1, cart)
+              .then(resolve)
+              .catch(reject);
+          } else {
+            reject(error);
+          }
+        });
+    });
   }
 
-let cart = {};
-
-const BASE_URL = 'https://us-central1-insider-integrations.cloudfunctions.net/cart-api-fullstack-test'
-
-let cartLocalData = JSON.parse(localStorage.getItem('@cartLocalData'))
-
-function addToCart(event) {
+  function addToCart(event) {
     const button = event.target;
     const productCode = button.getAttribute('data-product-code');
-    cartLocalData = JSON.parse(localStorage.getItem('@cartLocalData') || '{}')
-    let cart = {};
-    if (cart[productCode]) {
-        cart.codigo[productCode].quantity++;
-    } else{
-        cart = {
-            "codigo": productCode,
-            "quantidade": 1
-        }
-        fetch(`https://us-central1-insider-integrations.cloudfunctions.net/cart-api-fullstack-test/cart/${cartLocalData?.token}`, {
-                method: 'POST',
-                body: JSON.stringify(cart),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.token) {
-                    localStorage.setItem('@cartLocalData', JSON.stringify(data));
-                    addCartItemByToken(data.token)
-                }
-            })
-            .catch(error => {
-                console.log('Error:', error);
-            });
+    
+    const cartLocalData = JSON.parse(localStorage.getItem('@cartLocalData') || '{}')
+    
+    const cart = {
+        codigo: productCode,
+        quantidade: 1
     }
-}
+     
+    callEndpoint(`${BASE_URL}/cart${cartLocalData.token ? `/${cartLocalData.token}` : ''}`, 15, cart )
+        .then(response => response.json())
+        .then(data => {
+            
+            if (data.token) {
+                localStorage.setItem('@cartLocalData', JSON.stringify(data));
+                getCartByToken(data.token)
+                if(data.products.length > 0){
+                    removeEmptyCartElement()
+                }
+                alert(`Produto adicionado ao carrinho`)
+                return;
+            }
 
-fetch(`${BASE_URL}/products`)
+            alert('Não foi possivel adicionar produto tente novamente.')
+        })
+        .catch(_error => {
+            alert('Não foi possivel adicionar produto tente novamente.');
+        });
+  }
+  
+  fetch(`${BASE_URL}/products`)
   .then(response => response.json())
   .then(data => {
     data.forEach(({ imagem, nome, valor, codigo }) => {
@@ -67,56 +81,69 @@ fetch(`${BASE_URL}/products`)
         <div class="product-list">
             <div class="product-card">
                 <div class="product-image">
-                    <img src="${imagem}" class="product-thumb" alt="logo">
-                    <button class="card-btn"  data-product-code="${codigo}">adicionar</button>
+                    <img src="${imagem}"  class="product-thumb" width="400" alt=${nome}>
+                    
                 </div>
                 <div class="product-info">
-                    <h2 class="product-brand">${nome}</h2>
-                    <p class="product-short-des">a short line about the cloth..</p>
-                    <span class="price">$${valor}</span><span class="actual-price">$40</span>
+                    <h4 class="product-brand">${nome}</h4>
+                    <h2 class="price">${currencyFormatter.format(valor)}</h2>
+                    <button class="card-btn"  data-product-code="${codigo}">adicionar</button>
                 </div>
             </div>
         </div>
       `;
-
+  
       const addItemElement  = productElem.querySelector('.card-btn');
       addItemElement .addEventListener('click', addToCart);
-
-      productList.appendChild(productElem);
-    });
-}).catch(error => console.log(error))
   
-function updateCart(cart) {
+      productList.appendChild(productElem);
+
+
+    });
+  }).catch(error => alert(error))
+  
+  function updateCart(cart) {
     const cartList = document.getElementById('cart-items');
     cartList.innerHTML = '';
-    let totalCost = 0;
-    let totalItens = cart.products.length;
+    const totalCost = cart.valor_total || 0;
+    const totalItens = cart?.products.length;
 
+    if(totalItens === 0) return;    
+  
     cartList.innerHTML = `
-        <h3>Sua cesta tem ${totalItens} item</h3>
-    `
+     <div class="cart-itens-content">
+       <img src="https://cdn-icons-png.flaticon.com/512/4543/4543114.png" width="40" alt="icone de sacola" >
+       <div>
+        Sua cesta tem ${totalItens} ${totalItens > 1 ? 'itens' : 'item'}.
+       </span>
+       </div>
+     </div>
+
+     <div class="total-cart">
+       <button type="button">total: ${currencyFormatter.format(totalCost)}</button>
+      </div>
+   `
+
     for (const product of cart.products) {
         const { imagem, nome, valor, quantity, codigo } = product;
-        totalCost += valor * quantity;
         const cartProductElement = document.createElement('div');
         cartProductElement.classList.add('cart-product');
         cartProductElement.innerHTML = `
-            <img class="product-img" src="${imagem}" width="50" height="80" />
-            <span class="product-name">${nome}</span> <br />   <br /> 
-            <span class="product-price">${quantity} x ${currencyFormatter.format(valor)}</span>
-            <button class="remove-button" data-product-code="${codigo}" >remover</button>
+            <img class="product-img" src="${imagem}" alt="${nome}" width="50" height="80" />
+            <div class="cart-item-info">
+                <span class="product-name">${nome}</span> <br />  
+                <span class="product-price">${quantity} x ${currencyFormatter.format(valor)}</span> <br />  
+                <button class="remove-button" data-product-code="${codigo}" >remover</button>
+           </div>
         `;
         const removeElement  = cartProductElement.querySelector('.remove-button');
         removeElement .addEventListener('click', deleteFromCart);
-
+  
         cartList.appendChild(cartProductElement);
     }
-    // Update the total
-    const total = document.getElementById('total');
-    total.innerHTML = `Total: $${totalCost || 0}`;
-}
-
-const addCartItemByToken = async (token) => {
+  }
+  
+  function getCartByToken(token){
     fetch(`${BASE_URL}/cart/${token}`,  {
         method: 'GET',
         headers: {
@@ -125,34 +152,43 @@ const addCartItemByToken = async (token) => {
     })
     .then(response => response.json())
     .then(data => {
-        // Update the cart object
+        localStorage.setItem('@cartLocalData', JSON.stringify(data))
         cart = data;
-        // Update the cart on the front-end
         updateCart(cart);
+        removeEmptyCartElement()
     })    
     .catch(error => {
-        console.log('Error:', error);
+        console.log(error)
     });
-}
-
-function deleteFromCart(event) {
+  }
+  
+  function deleteFromCart(event) {
     const button = event.target;
     const productCode = button.getAttribute('data-product-code');
+    const cartLocalData = JSON.parse(localStorage.getItem('@cartLocalData'));
   
-    fetch(`https://us-central1-insider-integrations.cloudfunctions.net/cart-api-fullstack-test/cart/${cartLocalData.token}/${productCode}`, {
+    fetch(`${BASE_URL}/cart/${cartLocalData.token}/${productCode}`, {
         method: 'DELETE'
     })
     .then(response => response.json())
     .then(data => {
         cart = data;
-        updateCart(cart);
+        getCartByToken(cartLocalData.token);
     })
     .catch(error => {
-        console.log('Error:', error);
+        alert('Error:', error);
     });
   }
 
-if(cartLocalData.token){
-    addCartItemByToken(cartLocalData.token)
-}
+  function removeEmptyCartElement(){
+    const cartLocalData = JSON.parse(localStorage.getItem('@cartLocalData'));
+    const emptyCarElement = document.querySelector(".empty-cart");   
 
+    if(cartLocalData.products.length === 0) return  emptyCarElement.style.display = "flex";
+
+    emptyCarElement.style.display = "none";
+  }
+  
+  if(cartLocalData?.token){
+    getCartByToken(cartLocalData.token)
+  }
