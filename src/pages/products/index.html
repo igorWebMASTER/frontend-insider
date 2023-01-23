@@ -1,53 +1,56 @@
-
 <!DOCTYPE html>
 <html lang=”pt-br”>
-  <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frontend Insider</title>
-    <link rel="stylesheet" href="./styles.css">
-    <script src="../../products.js"></script>
-    <!-- <script src="../../menu.js"></script> -->
-    <title>Insider Shop</title>
-  </head>
-  <body>
-    <header class="cart-header">
-      <div class="back-icon">
-        <img onclick="backToProductList()" src="https://cdn-icons-png.flaticon.com/512/93/93634.png" width="40" height="40" alt="icone de flecha para voltar para lista de produtos" >
-      </div>
-      <div>
-        <h1 class="logo">INSIDER</div>  
-      </div>
-      <div  class="header-cart-icon">
-        <img onclick="getHeaderElement()" alt="icone de carrinho" src="https://cdn-icons-png.flaticon.com/512/4543/4543114.png" width="40" height="40" />
-      </div>
-    </header>
-    <div class="shopping-cart">
-      <div class="product-container">
-        <div id="product-list"></div>
-        <div class="cart" class="fancy-appear">
-          <div class="cart-items">
-            <div class="empty-cart">
-              <div>
-                <img src="https://cdn-icons-png.flaticon.com/512/4543/4543114.png" width="40" alt="icone de sacola">
-              </div>
-              Sua cesta está vazia. <br />
-              adicione um produto. :)
-              </span>
-            </div>
-          </div>
-          <div class="shopping-cart">
-            <div id="cart-items"></div>
-            <div id="total"></div>
-          </div>
-        </div>  
-      </div>
-      <div id="cart-list" class="cart-list">
-        <div class="cart-items"></div>
-      </div>
-      <div id="total" class="total"></div>
-    </div>
 
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frontend Insider</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="../../products.js"></script>
+  <title>Insider Shop</title>
+</head>
+
+<body>
+  <header class="cart-header">
+    <div class="back-icon">
+      <img onclick="backToProductList()" src="https://cdn-icons-png.flaticon.com/512/93/93634.png" width="40"
+        height="40" alt="icone de flecha para voltar para lista de produtos">
+    </div>
+    <div>
+      <h1 class="logo">INSIDER
+    </div>
+    </div>
+    <div class="header-cart-icon">
+      <img onclick="getHeaderElement()" alt="icone de carrinho"
+        src="https://cdn-icons-png.flaticon.com/512/4543/4543114.png" width="40" height="40" />
+    </div>
+  </header>
+  <div class="shopping-cart">
+    <div class="product-container">
+      <div id="product-list"></div>
+      <div class="cart" class="fancy-appear">
+        <div class="cart-items">
+          <div class="empty-cart">
+            <div>
+              <img src="https://cdn-icons-png.flaticon.com/512/4543/4543114.png" width="40" alt="icone de sacola">
+            </div>
+            Sua cesta está vazia. <br />
+            adicione um produto. :)
+            </span>
+          </div>
+        </div>
+        <div class="shopping-cart">
+          <div id="cart-items"></div>
+          <div id="total"></div>
+        </div>
+      </div>
+    </div>
+    <div id="cart-list" class="cart-list">
+      <div class="cart-items"></div>
+    </div>
+    <div id="total" class="total"></div>
+  </div>
+</body>
+
 </html>
